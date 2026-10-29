@@ -4,17 +4,27 @@ Most tests are arithmetic checks worked out by hand. Inputs like 800 SFM
 are just numbers to exercise the math, not cutting recommendations.
 """
 
+import math
+
 import pytest
 
 from formulas import (
+    ball_effective_diameter,
     cap_rpm,
     chip_thinning_factor,
+    circular_feed_external,
+    circular_feed_internal,
+    cutting_hp,
+    diameter_for_rpm_inch,
+    drilling_feed_rate,
+    drilling_mrr,
     milling_feed_rate,
     milling_mrr,
     milling_rpm_inch,
     milling_rpm_metric,
     sfm_from_rpm,
     turning_feed_rate,
+    turning_mrr_inch,
     turning_rpm_inch,
     turning_rpm_metric,
     vc_from_rpm,
@@ -109,7 +119,56 @@ def test_milling_mrr():
     assert milling_mrr(0.25, 0.5, 36) == pytest.approx(4.5)
 
 
+def test_drilling_mrr():
+    # pi / 4 * 0.5^2 * 10 IPM = 1.9635 in^3/min
+    assert drilling_mrr(0.5, 10) == pytest.approx(math.pi / 4 * 0.25 * 10)
+
+
+def test_turning_mrr_inch():
+    # 12 * 500 SFM * 0.008 IPR * 0.1 DOC = 4.8 in^3/min
+    assert turning_mrr_inch(500, 0.008, 0.1) == pytest.approx(4.8)
+
+
+# --- Drilling, CSS, ball mills, circular interpolation, power -------------
+
+def test_drilling_feed_rate():
+    # 2000 RPM * 0.005 IPR = 10 IPM
+    assert drilling_feed_rate(2000, 0.005) == pytest.approx(10)
+
+
+def test_diameter_for_rpm_reverses_turning_rpm():
+    rpm = turning_rpm_inch(500, 2.0)
+    assert diameter_for_rpm_inch(500, rpm) == pytest.approx(2.0)
+
+
+def test_ball_effective_diameter():
+    # 2 * sqrt(0.1 * (0.5 - 0.1)) = 2 * sqrt(0.04) = 0.4
+    assert ball_effective_diameter(0.1, 0.5) == pytest.approx(0.4)
+    assert ball_effective_diameter(0.25, 0.5) == 0.5  # half the diameter: full size
+    assert ball_effective_diameter(0.4, 0.5) == 0.5
+
+
+def test_circular_feed_internal():
+    # 0.5" tool in a 1" hole: center moves at half the edge feed
+    assert circular_feed_internal(20, 1.0, 0.5) == pytest.approx(10)
+
+
+def test_circular_feed_external():
+    # 0.5" tool around a 1" boss: center moves at 1.5x the edge feed
+    assert circular_feed_external(20, 1.0, 0.5) == pytest.approx(30)
+
+
+def test_cutting_hp():
+    assert cutting_hp(4, 0.5) == pytest.approx(2)
+
+
 # --- Bad input -------------------------------------------------------------
+
+def test_tool_as_big_as_hole_raises():
+    with pytest.raises(ValueError):
+        circular_feed_internal(20, 0.5, 0.5)
+
+
 
 def test_zero_diameter_raises():
     with pytest.raises(ValueError):
@@ -131,22 +190,11 @@ def test_radial_doc_larger_than_tool_raises():
         chip_thinning_factor(0.6, 0.5)
 
 
-# --- Machinery's Handbook worked examples ----------------------------------
-# Fill these in from your copy, then delete the @pytest.mark.skip line.
+# --- Cross-check against a published formula -------------------------------
 
-@pytest.mark.skip(reason="TODO: add a worked example from Machinery's Handbook")
-def test_milling_rpm_matches_handbook():
-    # Source: Machinery's Handbook, ___ edition, page ___
-    sfm = None
-    tool_diameter_in = None
-    handbook_rpm = None
-    assert milling_rpm_inch(sfm, tool_diameter_in) == pytest.approx(handbook_rpm, abs=1)
-
-
-@pytest.mark.skip(reason="TODO: add a worked example from Machinery's Handbook")
-def test_turning_rpm_matches_handbook():
-    # Source: Machinery's Handbook, ___ edition, page ___
-    sfm = None
-    part_diameter_in = None
-    handbook_rpm = None
-    assert turning_rpm_inch(sfm, part_diameter_in) == pytest.approx(handbook_rpm, abs=1)
+@pytest.mark.parametrize("sfm, diameter", [(100, 0.125), (800, 0.5), (1500, 1.0)])
+def test_rpm_matches_harvey_published_formula(sfm, diameter):
+    # Harvey Tool General Machining Guidelines publishes RPM = (3.82 x SFM) / D.
+    # 3.82 is 12 / pi rounded, so the two agree to within 0.01%.
+    # https://www.harveytool.com/resources/general-machining-guidelines (checked 2026-10-28)
+    assert milling_rpm_inch(sfm, diameter) == pytest.approx(3.82 * sfm / diameter, rel=1e-4)

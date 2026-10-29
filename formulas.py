@@ -79,6 +79,30 @@ def vc_from_rpm(rpm, diameter_mm):
     return (rpm * math.pi * diameter_mm) / 1000
 
 
+def diameter_for_rpm_inch(sfm, rpm):
+    """Return the diameter (inches) where a surface speed needs this RPM.
+
+    With constant surface speed (G96), RPM climbs as the diameter shrinks.
+    Below this diameter the spindle sits at the rpm limit.
+    """
+    _require_positive("sfm", sfm)
+    _require_positive("rpm", rpm)
+    return (sfm * 12) / (math.pi * rpm)
+
+
+def ball_effective_diameter(axial_doc, tool_diameter):
+    """Return the diameter a ball end mill actually cuts at.
+
+    At an axial DOC under half the diameter, only a smaller circle near the
+    tip touches the part. At half the diameter or deeper it's the full size.
+    """
+    _require_positive("axial_doc", axial_doc)
+    _require_positive("tool_diameter", tool_diameter)
+    if axial_doc >= tool_diameter / 2:
+        return tool_diameter
+    return 2 * math.sqrt(axial_doc * (tool_diameter - axial_doc))
+
+
 def cap_rpm(rpm, machine_max_rpm, chuck_max_rpm=None):
     """Return rpm lowered to the machine max, and the chuck max if given.
 
@@ -119,6 +143,44 @@ def turning_feed_rate(rpm, feed_per_rev):
     return rpm * feed_per_rev
 
 
+def drilling_feed_rate(rpm, feed_per_rev):
+    """Return feed per minute for drilling.
+
+    Inch: feed_per_rev in IPR gives feed in IPM.
+    Metric: feed_per_rev in mm/rev gives feed in mm/min.
+    """
+    _require_positive("rpm", rpm)
+    _require_positive("feed_per_rev", feed_per_rev)
+    return rpm * feed_per_rev
+
+
+def circular_feed_internal(edge_feed, hole_diameter, tool_diameter):
+    """Return the programmed (tool center) feed for milling inside a hole.
+
+    The tool center travels a smaller circle than the cutting edge, so it
+    has to move slower to keep the chip load at the edge:
+    F_center = F_edge x (D_hole - D_tool) / D_hole
+    """
+    _require_positive("edge_feed", edge_feed)
+    _require_positive("hole_diameter", hole_diameter)
+    _require_positive("tool_diameter", tool_diameter)
+    if tool_diameter >= hole_diameter:
+        raise ValueError("tool_diameter must be smaller than hole_diameter")
+    return edge_feed * (hole_diameter - tool_diameter) / hole_diameter
+
+
+def circular_feed_external(edge_feed, part_diameter, tool_diameter):
+    """Return the programmed (tool center) feed for milling around a boss.
+
+    The tool center travels a bigger circle than the cutting edge:
+    F_center = F_edge x (D_part + D_tool) / D_part
+    """
+    _require_positive("edge_feed", edge_feed)
+    _require_positive("part_diameter", part_diameter)
+    _require_positive("tool_diameter", tool_diameter)
+    return edge_feed * (part_diameter + tool_diameter) / part_diameter
+
+
 def chip_thinning_factor(radial_doc, tool_diameter):
     """Return the chip load multiplier for radial chip thinning.
 
@@ -152,3 +214,39 @@ def milling_mrr(radial_doc, axial_doc, feed_rate):
     _require_positive("axial_doc", axial_doc)
     _require_positive("feed_rate", feed_rate)
     return radial_doc * axial_doc * feed_rate
+
+
+def drilling_mrr(drill_diameter, feed_rate):
+    """Return material removal rate for drilling: hole area x feed.
+
+    Inch: inches and IPM give cubic inches per minute.
+    Metric: mm and mm/min give mm^3/min.
+    """
+    _require_positive("drill_diameter", drill_diameter)
+    _require_positive("feed_rate", feed_rate)
+    return math.pi / 4 * drill_diameter ** 2 * feed_rate
+
+
+def turning_mrr_inch(sfm, feed_per_rev_in, doc_in):
+    """Return material removal rate for turning in cubic inches per minute.
+
+    MRR = 12 x SFM x feed per rev x DOC
+    """
+    _require_positive("sfm", sfm)
+    _require_positive("feed_per_rev_in", feed_per_rev_in)
+    _require_positive("doc_in", doc_in)
+    return 12 * sfm * feed_per_rev_in * doc_in
+
+
+# --- Power -----------------------------------------------------------------
+
+def cutting_hp(mrr_in3_per_min, unit_power):
+    """Return horsepower at the cutter: MRR x unit power.
+
+    unit_power is the horsepower needed to remove one cubic inch per minute
+    of the material. This doesn't include machine losses, so the spindle
+    motor needs more than this.
+    """
+    _require_positive("mrr_in3_per_min", mrr_in3_per_min)
+    _require_positive("unit_power", unit_power)
+    return mrr_in3_per_min * unit_power
