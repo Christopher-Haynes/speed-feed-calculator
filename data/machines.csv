@@ -1,0 +1,4 @@
+machine_key,name,machine_type,max_rpm,spindle_hp,max_feed_ipm,taper,notes,source,source_ref,date_checked,confidence
+tormach-1100mx,Tormach 1100MX,mill,10000,2,300,BT30,Max feed is X and Y; Z is 230 IPM.,Tormach 1100MX product page,https://tormach.com/machines/mills/1100mx.html,2026-10-28,manufacturer
+tormach-770mx,Tormach 770MX,mill,10000,2,450,BT30,"2 hp continuous, 4.5 hp peak. Max feed is X and Y; Z is 420 IPM.",Tormach 770MX product page,https://tormach.com/machines/mills/770mx.html,2026-10-28,manufacturer
+tormach-8l,Tormach 8L,lathe,5000,1.5,150,,"5C spindle nose. Low range 180-2,500 RPM, high range 350-5,000 RPM. Max feed is X and Z.",Tormach 8L technical specifications,https://tormach.com/support/lathe/8l-lathe-technical-specifications,2026-10-28,manufacturer
