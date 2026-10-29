@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Report a bad number · Speed &amp; Feed Calculator{% endblock %}
+
+{% block content %}
+<article class="prose">
+  <h1>Report a bad number</h1>
+
+  {% if sent %}
+  <div class="card">
+    <p><strong>Thanks.</strong> Your report was sent and will be checked against the source.</p>
+    <p><a href="{{ url_for('main.calculator_page', op='milling') }}">Back to the calculator</a></p>
+  </div>
+  {% else %}
+  <p>Something look off? Say which number and what you'd expect. If you came from the calculator, your inputs are attached so the setup can be checked.</p>
+
+  {% if error %}<div class="card errors" role="alert">{{ error }}</div>{% endif %}
+
+  <form method="post" action="{{ url_for('main.report') }}" class="card">
+    <input type="hidden" name="op" value="{{ form.get('op', '') }}">
+    <input type="hidden" name="context" value="{{ form.get('context', '') }}">
+
+    <label class="field">
+      <span class="field-label">What looks wrong?</span>
+      <textarea name="message" required maxlength="2000">{{ form.get('message', '') }}</textarea>
+    </label>
+
+    <label class="field">
+      <span class="field-label">Email or name <span class="unit">optional, only if you want a reply</span></span>
+      <input type="text" name="contact" value="{{ form.get('contact', '') }}" maxlength="200" autocomplete="email">
+    </label>
+
+    {# Hidden from people; bots fill it in. #}
+    <div class="visually-hidden" aria-hidden="true">
+      <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    {% if form.get('context') %}
+    <p class="help">Attached inputs: <code>{{ form.get('context') }}</code></p>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Send report</button>
+  </form>
+  {% endif %}
+</article>
+{% endblock %}

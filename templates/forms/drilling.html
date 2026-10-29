@@ -1,0 +1,26 @@
+{% import "_fields.html" as f with context %}
+
+<fieldset class="card">
+  <legend>Material</legend>
+  {{ f.material_select(material_groups) }}
+</fieldset>
+
+<fieldset class="card">
+  <legend>Drill</legend>
+  <div class="grid-2">
+    {{ f.number("diameter", "Diameter", "length") }}
+    {{ f.select("tool_material", "Tool material", choices.tool_materials) }}
+    {{ f.select("coating", "Coating", choices.mill_coatings) }}
+  </div>
+</fieldset>
+
+<fieldset class="card">
+  <legend>Speed and feed</legend>
+  <p class="help">Leave blank to use the material data. Type a value to override it.</p>
+  <div class="grid-2">
+    {{ f.number("sfm", "Surface speed", "speed") }}
+    {{ f.number("ipr", "Feed per rev", "feed_rev") }}
+  </div>
+</fieldset>
+
+{{ f.machine_fieldset(machines) }}

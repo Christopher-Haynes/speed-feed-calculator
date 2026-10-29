@@ -1,0 +1,44 @@
+{% import "_fields.html" as f with context %}
+
+<fieldset class="card">
+  <legend>Material</legend>
+  {{ f.material_select(material_groups) }}
+</fieldset>
+
+<fieldset class="card">
+  <legend>Tool</legend>
+  <div class="grid-2">
+    {{ f.select("tool_type", "Type", choices.mill_tool_types) }}
+    {{ f.select("tool_material", "Tool material", choices.tool_materials) }}
+    {{ f.number("diameter", "Diameter", "length") }}
+    {{ f.number("flutes", "Flutes", mode="numeric") }}
+    {{ f.select("coating", "Coating", choices.mill_coatings) }}
+    {{ f.number("helix", "Helix angle (°)") }}
+    {{ f.number("corner_radius", "Corner radius", "length") }}
+    {{ f.number("stickout", "Stickout", "length") }}
+  </div>
+</fieldset>
+
+<fieldset class="card">
+  <legend>Cut</legend>
+  <div class="grid-2">
+    {{ f.number("woc", "Radial depth (WOC)", "length") }}
+    {{ f.number("doc", "Axial depth (DOC)", "length") }}
+    {{ f.select("path", "Tool path", choices.mill_paths) }}
+    <div data-show-if="path:internal,external">
+      {{ f.number("feature_diameter", "Hole or boss diameter", "length") }}
+    </div>
+    {{ f.select("thinning", "Chip thinning under 50% WOC", choices.chip_thinning) }}
+  </div>
+</fieldset>
+
+<fieldset class="card">
+  <legend>Speed and feed</legend>
+  <p class="help">Leave blank to use the material data. Type a value to override it.</p>
+  <div class="grid-2">
+    {{ f.number("sfm", "Surface speed", "speed") }}
+    {{ f.number("chip_load", "Chip load", "feed_tooth") }}
+  </div>
+</fieldset>
+
+{{ f.machine_fieldset(machines) }}

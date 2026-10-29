@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Data sources · Speed &amp; Feed Calculator{% endblock %}
+
+{% block content %}
+<article class="prose">
+  <h1>Data sources</h1>
+  <p>Every value in the data records where it came from, the page, table or link, the date it was checked, and a confidence level. When more than one source covers the same cut, the calculator uses shop-verified data first, then manufacturer, then handbook, and lists the others to cross-check.</p>
+
+  <h2>Confidence levels</h2>
+  <ul>
+    <li><span class="badge badge-shop-verified">shop-verified</span> Run on a real machine and logged.</li>
+    <li><span class="badge badge-manufacturer">manufacturer</span> From a tool or machine maker's published data, for their own products.</li>
+    <li><span class="badge badge-handbook">handbook</span> From a published machining reference.</li>
+  </ul>
+
+  <h2>Sources in use</h2>
+  {% if sources %}
+  <div class="table-wrap">
+    <table class="range sources-table">
+      <thead>
+        <tr><th scope="col">Source</th><th scope="col">Confidence</th><th scope="col">Rows</th><th scope="col">Used for</th><th scope="col">Last checked</th></tr>
+      </thead>
+      <tbody>
+        {% for s in sources %}
+        <tr>
+          <th scope="row">{{ s.source }}</th>
+          <td><span class="badge badge-{{ s.confidence }}">{{ s.confidence }}</span></td>
+          <td>{{ s.row_count }}</td>
+          <td>{{ s.tables.replace(",", ", ").replace("_", " ") }}</td>
+          <td>{{ s.last_checked }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="card">No cutting data has been entered yet. Until it is, the calculator works with the surface speed and feed you type in.</p>
+  {% endif %}
+
+  <h2>What's never used</h2>
+  <ul>
+    <li>Numbers copied from other feeds and speeds websites.</li>
+    <li>Guessed or made-up values. If a source doesn't give a number, the field stays blank.</li>
+  </ul>
+</article>
+{% endblock %}

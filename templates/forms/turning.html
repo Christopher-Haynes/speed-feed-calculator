@@ -1,0 +1,51 @@
+{% import "_fields.html" as f with context %}
+
+<fieldset class="card">
+  <legend>Material</legend>
+  {{ f.material_select(material_groups) }}
+</fieldset>
+
+<fieldset class="card">
+  <legend>Cut</legend>
+  <div class="grid-2">
+    {{ f.select("cut_type", "Operation", choices.turning_cuts) }}
+    {{ f.number("doc", "Depth of cut", "length") }}
+    {{ f.number("start_diameter", "Start diameter", "length",
+                help="Thread major diameter when threading") }}
+    <div data-hide-if="cut_type:thread">
+      {{ f.number("finish_diameter", "Finish diameter", "length",
+                  help="0 to face or part to center") }}
+    </div>
+    <div data-show-if="cut_type:thread">
+      {{ f.number("pitch", "Thread pitch", "thread") }}
+    </div>
+  </div>
+  <p class="help" data-show-if="cut_type:thread">
+    Threading uses a fixed RPM (G97), not constant surface speed.
+  </p>
+</fieldset>
+
+<fieldset class="card">
+  <legend>Insert</legend>
+  <div class="grid-2">
+    {{ f.select("insert_shape", "Shape", choices.insert_shapes) }}
+    {{ f.number("nose_radius", "Nose radius", "length") }}
+    {{ f.select("tool_material", "Tool material", choices.tool_materials) }}
+    {{ f.text("grade", "Grade", help="As printed on the box") }}
+    {{ f.select("coating", "Coating", choices.lathe_coatings) }}
+    {{ f.select("chipbreaker", "Chipbreaker", choices.chipbreakers) }}
+  </div>
+</fieldset>
+
+<fieldset class="card">
+  <legend>Speed and feed</legend>
+  <p class="help">Leave blank to use the material data (OD, ID and facing). Type a value to override it.</p>
+  <div class="grid-2">
+    {{ f.number("sfm", "Surface speed", "speed") }}
+    <div data-hide-if="cut_type:thread">
+      {{ f.number("ipr", "Feed per rev", "feed_rev") }}
+    </div>
+  </div>
+</fieldset>
+
+{{ f.machine_fieldset(machines, show_chuck=true) }}

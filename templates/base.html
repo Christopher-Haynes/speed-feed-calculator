@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Fast, ad-free feeds and speeds calculator for milling, drilling and turning.">
+  <title>{% block title %}Speed &amp; Feed Calculator{% endblock %}</title>
+  <link rel="icon" href="data:,">
+  <script>
+    // Runs before the page draws, so the saved theme shows without a flash.
+    document.documentElement.classList.add("js");
+    try {
+      var savedTheme = localStorage.getItem("sf.theme");
+      if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="site-name" href="{{ url_for('main.index') }}">Speed &amp; Feed</a>
+    <nav class="site-nav" aria-label="Pages">
+      <a href="{{ url_for('main.calculator_page', op='milling') }}">Calculator</a>
+      <a href="{{ url_for('main.formulas_page') }}">Formulas</a>
+      <a href="{{ url_for('main.sources_page') }}">Sources</a>
+    </nav>
+    <div class="header-controls">
+      <div class="segmented" role="group" aria-label="Units">
+        {% for system, text in [("inch", "Inch"), ("metric", "Metric")] %}
+          {% if op is defined %}
+            {# Submits the calculator form so the values get converted too. #}
+            <button type="submit" form="calc-form" name="convert_to" value="{{ system }}"
+                    class="seg{% if units == system %} on{% endif %}"
+                    aria-pressed="{{ 'true' if units == system else 'false' }}">{{ text }}</button>
+          {% else %}
+            <a href="?units={{ system }}" class="seg{% if units == system %} on{% endif %}"
+               aria-current="{{ 'true' if units == system else 'false' }}">{{ text }}</a>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <button type="button" class="icon-btn js-only" id="theme-toggle"
+              aria-label="Switch between dark and light">◐</button>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Starting values only.</strong> Adjust for your machine, setup and rigidity.</p>
+    <p>
+      <a href="{{ url_for('main.report') }}">Report a bad number</a>
+      · No ads, no tracking, no sign-up.
+    </p>
+  </footer>
+
+  <div id="mobile-bar" class="mobile-bar" aria-hidden="true" hidden></div>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

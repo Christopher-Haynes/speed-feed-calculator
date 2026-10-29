@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Formulas · Speed &amp; Feed Calculator{% endblock %}
+
+{% block content %}
+<article class="prose">
+  <h1>Formulas</h1>
+  <p>Every number on the calculator comes from these formulas. Inch and metric versions are both shown; the calculator works in inch and converts.</p>
+
+  <h2>Spindle speed (RPM)</h2>
+  <p>How fast the spindle turns so the cutting edge moves past the material at the right surface speed.</p>
+  <code class="formula">RPM = (SFM × 12) ÷ (π × D)          D in inches</code>
+  <code class="formula">RPM = (Vc × 1000) ÷ (π × D)         Vc in m/min, D in mm</code>
+  <p>12 ÷ π is about 3.82, which is where the shop rule <em>RPM = SFM × 3.82 ÷ D</em> comes from.</p>
+  <ul>
+    <li><strong>Milling and drilling:</strong> D is the <em>tool</em> diameter.</li>
+    <li><strong>Turning:</strong> D is the <em>part</em> diameter, because the part is what spins.</li>
+  </ul>
+
+  <h2>RPM limits</h2>
+  <p>RPM is capped at the lowest limit: the machine max, and on a lathe the chuck or workholding max. When RPM is capped, the real surface speed drops:</p>
+  <code class="formula">SFM = RPM × π × D ÷ 12</code>
+  <p>Feed is always figured from the capped RPM. Using the uncapped RPM would put a bigger chip on every tooth than planned.</p>
+
+  <h2>Feed rate</h2>
+  <code class="formula">Milling:   feed = RPM × chip load × flutes</code>
+  <code class="formula">Drilling:  feed = RPM × feed per rev</code>
+  <code class="formula">Turning:   feed = RPM × feed per rev</code>
+
+  <h2>Radial chip thinning</h2>
+  <p>When the radial depth of cut (WOC) is less than half the tool diameter, each tooth takes a thinner chip than the programmed chip load. Too thin and the tool rubs instead of cutting. To get the intended chip back, the chip load is multiplied by:</p>
+  <code class="formula">factor = 1 ÷ √(1 − (1 − 2 × WOC ÷ D)²)</code>
+  <p>At 50% WOC or more the factor is 1 (no change). At 25% it's about 1.15, and at 10% it's about 1.67. You can turn the adjustment off to see how thin the chip really gets.</p>
+
+  <h2>Ball end mill effective diameter</h2>
+  <p>At an axial depth under half the diameter, a ball mill only cuts with a smaller circle near its tip:</p>
+  <code class="formula">D effective = 2 × √(DOC × (D − DOC))</code>
+  <p>The real surface speed at that diameter is lower than at the full diameter, and the calculator notes it.</p>
+
+  <h2>Circular interpolation</h2>
+  <p>The machine moves the tool <em>center</em>, but the chip is made at the <em>edge</em>. On an arc those travel different distances, so the programmed feed is adjusted:</p>
+  <code class="formula">Inside a hole:   F center = F edge × (D hole − D tool) ÷ D hole</code>
+  <code class="formula">Around a boss:   F center = F edge × (D part + D tool) ÷ D part</code>
+
+  <h2>Constant surface speed on a lathe (G96 / G50)</h2>
+  <p><strong>G96 S</strong> sets the surface speed, and the control raises RPM as the diameter gets smaller. <strong>G50 S</strong> caps the RPM, which matters most when facing or parting toward center. Set it to the lowest of the machine, chuck and workholding limits. The cap is reached at:</p>
+  <code class="formula">D = SFM × 12 ÷ (π × RPM limit)</code>
+  <p>Below that diameter the spindle sits at the cap and surface speed drops. Some controls use a different code for the RPM clamp (for example G92 on some Fanuc G-code systems), so check your control's manual.</p>
+
+  <h2>Threading (G97)</h2>
+  <p>Threading runs at a fixed RPM (<strong>G97</strong>), not constant surface speed, so the feed stays in step with the spindle. The feed per rev is the thread lead:</p>
+  <code class="formula">Inch:    lead = 1 ÷ TPI</code>
+  <code class="formula">Metric:  lead = pitch (mm)</code>
+  <p>For multi-start threads, lead = pitch × number of starts.</p>
+
+  <h2>Material removal rate (MRR)</h2>
+  <code class="formula">Milling:   MRR = WOC × DOC × feed</code>
+  <code class="formula">Drilling:  MRR = (π ÷ 4) × D² × feed</code>
+  <code class="formula">Turning:   MRR = 12 × SFM × feed per rev × DOC        in³/min</code>
+  <code class="formula">Turning:   MRR = Vc × feed per rev × DOC              cm³/min (metric)</code>
+
+  <h2>Horsepower check</h2>
+  <p>Each material needs a certain power to remove one cubic inch per minute (its <em>unit power</em>). Where the data has it:</p>
+  <code class="formula">HP at the cutter = MRR × unit power</code>
+  <p>The spindle motor needs more than this, because of losses in the machine, so treat a result close to your spindle rating as a warning sign.</p>
+</article>
+{% endblock %}

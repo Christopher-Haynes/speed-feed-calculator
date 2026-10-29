@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} · Speed &amp; Feed Calculator{% endblock %}
+
+{% block content %}
+<nav class="tabs" aria-label="Operation">
+  {% for key, tab_text in tabs %}
+  <a class="tab{% if key == op %} on{% endif %}"
+     href="{{ url_for('main.calculator_page', op=key, material=args.get('material') or None) }}"
+     {% if key == op %}aria-current="page"{% endif %}>{{ tab_text }}</a>
+  {% endfor %}
+</nav>
+
+<details class="card favorites js-only" id="favorites">
+  <summary>★ Favorites</summary>
+  <ul id="favorites-list"></ul>
+  <div class="row">
+    <input type="text" id="favorite-name" placeholder="Name this setup" maxlength="60"
+           aria-label="Name for this setup">
+    <button type="button" class="btn" id="save-favorite">Save current setup</button>
+  </div>
+</details>
+
+<div class="layout">
+  <form id="calc-form" class="inputs" method="get"
+        action="{{ url_for('main.calculator_page', op=op) }}"
+        data-results-url="{{ url_for('main.results_partial', op=op) }}"
+        data-units="{{ units }}" data-machine-type="{{ machine_type }}">
+    <input type="hidden" name="units" value="{{ units }}">
+    {% include "forms/" ~ op ~ ".html" %}
+    <button type="submit" class="btn btn-primary btn-wide no-js-only">Calculate</button>
+  </form>
+
+  <section id="results" class="results" aria-live="polite" aria-label="Results">
+    {% include "_results.html" %}
+  </section>
+</div>
+{% endblock %}

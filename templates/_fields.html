@@ -1,0 +1,86 @@
+{# Form field macros. Import with: {% import "_fields.html" as f with context %} #}
+
+{% macro number(name, label, kind=None, help="", mode="decimal") -%}
+<label class="field">
+  <span class="field-label">{{ label }}{% if kind %} <span class="unit">{{ unit_label(kind) }}</span>{% endif %}</span>
+  <input type="text" inputmode="{{ mode }}" name="{{ name }}" value="{{ args.get(name, '') }}"
+         autocomplete="off" spellcheck="false">
+  {%- if help %}<span class="help">{{ help }}</span>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro text(name, label, help="") -%}
+<label class="field">
+  <span class="field-label">{{ label }}</span>
+  <input type="text" name="{{ name }}" value="{{ args.get(name, '') }}" maxlength="40"
+         autocomplete="off" spellcheck="false">
+  {%- if help %}<span class="help">{{ help }}</span>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro select(name, label, options, help="") -%}
+{%- set current = args.get(name, options[0][0]) %}
+<label class="field">
+  <span class="field-label">{{ label }}</span>
+  <select name="{{ name }}">
+    {%- for value, option_text in options %}
+    <option value="{{ value }}"{% if value == current %} selected{% endif %}>{{ option_text }}</option>
+    {%- endfor %}
+  </select>
+  {%- if help %}<span class="help">{{ help }}</span>{% endif %}
+</label>
+{%- endmacro %}
+
+{% macro material_select(material_groups) -%}
+<label class="field">
+  <span class="field-label">Material</span>
+  <select name="material">
+    <option value="">Custom: type your own speed and feed</option>
+    {%- for group in material_groups %}
+    <optgroup label="{{ group.code }} · {{ group.name }}">
+      {%- for m in group.materials %}
+      <option value="{{ m.material_key }}"{% if args.get('material') == m.material_key %} selected{% endif %}>{{ m.label }}</option>
+      {%- endfor %}
+    </optgroup>
+    {%- endfor %}
+  </select>
+  {%- if not material_groups %}
+  <span class="help">No material data has been entered yet, so type your own surface speed and feed below.</span>
+  {%- endif %}
+</label>
+{%- endmacro %}
+
+{% macro machine_fieldset(machines, show_chuck=false) -%}
+<fieldset class="card">
+  <legend>Machine</legend>
+  <label class="field">
+    <span class="field-label">Machine</span>
+    <select name="machine" id="machine">
+      <option value="">Custom: type the limits below</option>
+      {%- if machines %}
+      <optgroup label="Presets">
+        {%- for m in machines %}
+        <option value="preset:{{ m.machine_key }}"
+                data-max_rpm="{{ m.max_rpm|input_value('rpm') }}"
+                data-max_feed="{{ m.max_feed_ipm|input_value('feed_rate') }}"
+                data-spindle_hp="{{ m.spindle_hp|input_value('power') }}"
+                {%- if args.get('machine') == 'preset:' ~ m.machine_key %} selected{% endif %}>{{ m.name }}</option>
+        {%- endfor %}
+      </optgroup>
+      {%- endif %}
+    </select>
+  </label>
+  <div class="grid-2">
+    {{ number("max_rpm", "Max RPM", mode="numeric") }}
+    {% if show_chuck %}{{ number("chuck_max_rpm", "Chuck / workholding max RPM", mode="numeric") }}{% endif %}
+    {{ number("max_feed", "Max feed", "feed_rate") }}
+    {{ number("spindle_hp", "Spindle power", "power") }}
+  </div>
+  <div class="row js-only">
+    <input type="text" id="machine-name" placeholder="Name this machine" maxlength="40"
+           aria-label="Name for this machine">
+    <button type="button" class="btn" id="save-machine">Save to My Machines</button>
+    <button type="button" class="btn" id="delete-machine" hidden>Remove</button>
+  </div>
+</fieldset>
+{%- endmacro %}

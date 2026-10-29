@@ -1,0 +1,95 @@
+{# The results panel. Rendered inside the page, and on its own for live updates. #}
+{% if result is none %}
+<div class="card">
+  <p class="placeholder">Fill in your tool and cut to see RPM and feed.</p>
+</div>
+
+{% elif result.errors %}
+<div class="card errors" role="alert">
+  <h2>Check your inputs</h2>
+  <ul>
+    {% for error in result.errors %}<li>{{ error }}</li>{% endfor %}
+  </ul>
+</div>
+
+{% else %}
+<div class="card" data-headline="{{ result.headline_text }}">
+  <div class="headline">
+    {% for item in result.headline %}
+    <div class="big">
+      <span class="big-label">{{ item.label }}</span>
+      <span class="big-value">{{ item.value|fmt(item.kind) }}</span>
+      <span class="big-unit">{{ unit_label(item.kind) }}</span>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if result.messages %}
+  <ul class="messages">
+    {% for message in result.messages %}
+    <li class="msg msg-{{ message.level }}">
+      <strong>{{ "Warning" if message.level == "warn" else "Note" }}:</strong> {{ message.text }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <dl class="details">
+    {% for item in result.details %}
+    <dt>{{ item.label }}</dt>
+    <dd>
+      {{ item.value|fmt(item.kind) }} <span class="unit">{{ unit_label(item.kind) }}</span>
+      {% if item.note %}<span class="note">{{ item.note }}</span>{% endif %}
+    </dd>
+    {% endfor %}
+  </dl>
+
+  {% if result.range %}
+  <h3>Data range</h3>
+  <div class="table-wrap">
+    <table class="range">
+      <thead>
+        <tr>
+          <th scope="col"><span class="visually-hidden">Value</span></th>
+          {% for column in result.range.columns %}<th scope="col">{{ column }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row_label, kind, values in result.range.rows %}
+        <tr>
+          <th scope="row">{{ row_label }} <span class="unit">{{ unit_label(kind) }}</span></th>
+          {% for value in values %}<td>{{ value|fmt(kind) }}</td>{% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <h3>Setup sheet</h3>
+  <pre class="copy-text" id="copy-text">{{ result.copy_text }}</pre>
+  <button type="button" class="btn js-only" data-copy="#copy-text">Copy for G-code notes</button>
+
+  <h3>Where these numbers come from</h3>
+  <ul class="sources">
+    {% for s in result.sources %}
+    <li>
+      <strong>{{ s.what }}:</strong> {{ s.value|fmt(s.kind) }} {{ unit_label(s.kind) }}
+      {% if s.confidence %}
+        · {{ s.source }}{% if s.source_ref %},
+          {% if s.source_ref.startswith("http") %}<a href="{{ s.source_ref }}" rel="noopener noreferrer" target="_blank">link</a>{% else %}{{ s.source_ref }}{% endif %}
+        {% endif %}
+        <span class="badge badge-{{ s.confidence }}">{{ s.confidence }}</span>
+        <span class="muted">checked {{ s.date_checked }}</span>
+      {% else %}
+        · your input
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+
+  <p class="report-link">
+    <a href="{{ url_for('main.report', op=op, context=request.query_string.decode()) }}">Report a bad number</a>
+  </p>
+</div>
+{% endif %}
